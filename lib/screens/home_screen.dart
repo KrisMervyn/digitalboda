@@ -11,7 +11,7 @@ class HomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF4A90E2), Color(0xFF357ABD)],
+            colors: [Color(0xFF2C3E50), Color(0xFF4CA1AF)],
           ),
         ),
         child: const Center(
@@ -25,7 +25,7 @@ class HomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 24),
               Text(
-                'Welcome to DigitalBoda!',
+                'Welcome to Training!',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 16),
               Text(
-                'Your account has been verified successfully',
+                'Your account has been verified. Ready to start your digital training journey!',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.white70,

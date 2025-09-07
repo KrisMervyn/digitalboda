@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'home_screen.dart';
+import 'rider_onboarding_screen.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -64,11 +65,42 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
   void _verifyOTP() {
     String otp = _otpControllers.map((controller) => controller.text).join();
     if (otp.length == 6) {
-      // Simulate OTP verification success
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      // Check for valid test OTP codes
+      if (otp == '000123' || otp == '123456' || otp == '000000') {
+        // Valid OTP - proceed
+        if (widget.isRegistration) {
+          // New user - go to onboarding
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => RiderOnboardingScreen(
+                phoneNumber: widget.phoneNumber,
+                userName: widget.userName ?? '',
+                userType: widget.userType ?? 'New Rider',
+              ),
+            ),
             (route) => false,
-      );
+          );
+        } else {
+          // Existing user - go directly to home
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+      } else {
+        // Invalid OTP - show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid OTP. Try: 000123, 123456, or 000000'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        // Clear the OTP fields
+        for (var controller in _otpControllers) {
+          controller.clear();
+        }
+        _focusNodes[0].requestFocus();
+      }
     }
   }
 
@@ -88,12 +120,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A90E2)),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF2C3E50)),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -108,7 +140,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                 const Icon(
                   Icons.sms,
                   size: 80,
-                  color: Color(0xFF4A90E2),
+                  color: Color(0xFF4CA1AF),
                 ),
                 const SizedBox(height: 32),
                 const Text(
@@ -116,7 +148,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C3E50),
+                    color: Color(0xFF2D3436),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -127,14 +159,14 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                     text: 'Enter the 6-digit code sent to\n',
                     style: const TextStyle(
                       fontSize: 16,
-                      color: Color(0xFF7F8C8D),
+                      color: Color(0xFF636E72),
                     ),
                     children: [
                       TextSpan(
                         text: widget.phoneNumber,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF4A90E2),
+                          color: Color(0xFF4CA1AF),
                         ),
                       ),
                     ],
@@ -154,9 +186,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 15,
+                            offset: Offset(0, 6),
                           ),
                         ],
                       ),
@@ -167,7 +199,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2C3E50),
+                          color: Color(0xFF2D3436),
                         ),
                         keyboardType: TextInputType.number,
                         inputFormatters: [
@@ -200,11 +232,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                   child: ElevatedButton(
                     onPressed: _verifyOTP,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4A90E2),
+                      backgroundColor: const Color(0xFF4CA1AF),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      elevation: 5,
+                      elevation: 8,
+                      shadowColor: Color(0xFF4CA1AF).withOpacity(0.4),
                     ),
                     child: const Text(
                       'Verify',
@@ -223,7 +256,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                   Text(
                     'Resend code in $_timeLeft seconds',
                     style: const TextStyle(
-                      color: Color(0xFF7F8C8D),
+                      color: Color(0xFF636E72),
                     ),
                   )
                 else
@@ -238,7 +271,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                     child: const Text(
                       'Resend Code',
                       style: TextStyle(
-                        color: Color(0xFF4A90E2),
+                        color: Color(0xFF4CA1AF),
                         fontWeight: FontWeight.bold,
                       ),
                     ),

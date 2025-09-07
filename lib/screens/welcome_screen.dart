@@ -13,7 +13,7 @@ class WelcomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF4A90E2), Color(0xFF357ABD)],
+            colors: [Color(0xFF2C3E50), Color(0xFF4CA1AF)],
           ),
         ),
         child: SafeArea(
@@ -40,12 +40,12 @@ class WelcomeScreen extends StatelessWidget {
                   child: const Icon(
                     Icons.motorcycle,
                     size: 80,
-                    color: Color(0xFF4A90E2),
+                    color: Color(0xFF2C3E50),
                   ),
                 ),
                 const SizedBox(height: 40),
                 const Text(
-                  'Welcome to DigitalBoda',
+                  'Welcome to DigitalBoda Training',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -55,7 +55,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Connect with trusted drivers in your area for safe and convenient rides.',
+                  'Learn digital skills, earn rewards, and win exciting prizes through our training modules.',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.white70,
@@ -79,11 +79,12 @@ class WelcomeScreen extends StatelessWidget {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
-                          foregroundColor: Color(0xFF4A90E2),
+                          foregroundColor: Color(0xFF2C3E50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          elevation: 5,
+                          elevation: 8,
+                          shadowColor: Colors.black.withOpacity(0.3),
                         ),
                         child: const Text(
                           'Login',
@@ -112,9 +113,11 @@ class WelcomeScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
+                          elevation: 4,
+                          shadowColor: Colors.black.withOpacity(0.2),
                         ),
                         child: const Text(
-                          'Sign Up',
+                          'Start Training',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

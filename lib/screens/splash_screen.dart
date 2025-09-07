@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF4A90E2), Color(0xFF357ABD)],
+            colors: [Color(0xFF2C3E50), Color(0xFF4CA1AF)],
           ),
         ),
         child: Center(
@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: const Icon(
                     Icons.motorcycle,
                     size: 60,
-                    color: Color(0xFF4A90E2),
+                    color: Color(0xFF2C3E50),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -84,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Your Digital Ride Solution',
+                  'Digital Training for Boda Riders',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.white70,

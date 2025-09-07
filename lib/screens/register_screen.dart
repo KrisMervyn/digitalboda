@@ -15,8 +15,8 @@ class _RegisterScreenState extends State<RegisterScreen>
     with SingleTickerProviderStateMixin {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  String _selectedCountryCode = '+1';
-  String _selectedUserType = 'Passenger';
+  String _selectedCountryCode = '+256';
+  String _selectedUserType = 'New Rider';
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -52,12 +52,12 @@ class _RegisterScreenState extends State<RegisterScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A90E2)),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF2C3E50)),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -66,25 +66,26 @@ class _RegisterScreenState extends State<RegisterScreen>
         child: SlideTransition(
           position: _slideAnimation,
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Create Account',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C3E50),
+                      color: Color(0xFF2D3436),
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Join DigitalBoda community today',
+                    'Join our training program and start earning rewards',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Color(0xFF7F8C8D),
+                      color: Color(0xFF636E72),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -96,9 +97,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: Offset(0, 8),
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
@@ -113,7 +115,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF2C3E50),
+                                color: Color(0xFF2D3436),
                               ),
                             ),
                           ),
@@ -125,12 +127,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                             decoration: const InputDecoration(
                               hintText: 'Enter your full name',
                               border: InputBorder.none,
-                              hintStyle: TextStyle(color: Color(0xFF95A5A6)),
-                              prefixIcon: Icon(Icons.person, color: Color(0xFF4A90E2)),
+                              hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
+                              prefixIcon: Icon(Icons.person, color: Color(0xFF4CA1AF)),
                             ),
                             style: const TextStyle(
                               fontSize: 16,
-                              color: Color(0xFF2C3E50),
+                              color: Color(0xFF2D3436),
                             ),
                           ),
                         ),
@@ -147,9 +149,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: Offset(0, 8),
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
@@ -164,7 +167,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF2C3E50),
+                                color: Color(0xFF2D3436),
                               ),
                             ),
                           ),
@@ -179,20 +182,15 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   color: Colors.grey[100],
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _selectedCountryCode,
-                                    items: const [
-                                      DropdownMenuItem(value: '+1', child: Text('+1')),
-                                      DropdownMenuItem(value: '+254', child: Text('+254')),
-                                      DropdownMenuItem(value: '+256', child: Text('+256')),
-                                      DropdownMenuItem(value: '+255', child: Text('+255')),
-                                    ],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _selectedCountryCode = value!;
-                                      });
-                                    },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: const Text(
+                                    '+256',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF2C3E50),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -203,13 +201,13 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   keyboardType: TextInputType.phone,
                                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                   decoration: const InputDecoration(
-                                    hintText: 'Enter phone number',
+                                    hintText: '7XX XXX XXX',
                                     border: InputBorder.none,
-                                    hintStyle: TextStyle(color: Color(0xFF95A5A6)),
+                                    hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
                                   ),
                                   style: const TextStyle(
                                     fontSize: 16,
-                                    color: Color(0xFF2C3E50),
+                                    color: Color(0xFF2D3436),
                                   ),
                                 ),
                               ),
@@ -229,9 +227,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: Offset(0, 8),
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
@@ -242,11 +241,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'Account Type',
+                              'Experience Level',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF2C3E50),
+                                color: Color(0xFF2D3436),
                               ),
                             ),
                           ),
@@ -255,39 +254,39 @@ class _RegisterScreenState extends State<RegisterScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Row(
                             children: [
-                              // Passenger Option
+                              // New Rider Option
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () => setState(() => _selectedUserType = 'Passenger'),
+                                  onTap: () => setState(() => _selectedUserType = 'New Rider'),
                                   child: Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: _selectedUserType == 'Passenger'
-                                          ? Color(0xFF4A90E2).withOpacity(0.1)
-                                          : Colors.grey[50],
+                                      color: _selectedUserType == 'New Rider'
+                                          ? Color(0xFF4CA1AF).withOpacity(0.1)
+                                          : Color(0xFFF8F9FA),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: _selectedUserType == 'Passenger'
-                                            ? Color(0xFF4A90E2)
-                                            : Colors.grey[300]!,
+                                        color: _selectedUserType == 'New Rider'
+                                            ? Color(0xFF4CA1AF)
+                                            : Color(0xFFB0BEC5),
                                       ),
                                     ),
                                     child: Column(
                                       children: [
                                         Icon(
-                                          Icons.person,
-                                          color: _selectedUserType == 'Passenger'
-                                              ? Color(0xFF4A90E2)
+                                          Icons.school,
+                                          color: _selectedUserType == 'New Rider'
+                                              ? Color(0xFF4CA1AF)
                                               : Colors.grey[600],
                                           size: 32,
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          'Passenger',
+                                          'New Rider',
                                           style: TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            color: _selectedUserType == 'Passenger'
-                                                ? Color(0xFF4A90E2)
+                                            color: _selectedUserType == 'New Rider'
+                                                ? Color(0xFF4CA1AF)
                                                 : Colors.grey[600],
                                           ),
                                         ),
@@ -298,39 +297,39 @@ class _RegisterScreenState extends State<RegisterScreen>
                               ),
                               const SizedBox(width: 12),
 
-                              // Driver Option
+                              // Experienced Rider Option
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () => setState(() => _selectedUserType = 'Driver'),
+                                  onTap: () => setState(() => _selectedUserType = 'Experienced Rider'),
                                   child: Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: _selectedUserType == 'Driver'
-                                          ? Color(0xFF4A90E2).withOpacity(0.1)
-                                          : Colors.grey[50],
+                                      color: _selectedUserType == 'Experienced Rider'
+                                          ? Color(0xFF2C3E50).withOpacity(0.1)
+                                          : Color(0xFFF8F9FA),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: _selectedUserType == 'Driver'
-                                            ? Color(0xFF4A90E2)
-                                            : Colors.grey[300]!,
+                                        color: _selectedUserType == 'Experienced Rider'
+                                            ? Color(0xFF2C3E50)
+                                            : Color(0xFFB0BEC5),
                                       ),
                                     ),
                                     child: Column(
                                       children: [
                                         Icon(
                                           Icons.motorcycle,
-                                          color: _selectedUserType == 'Driver'
-                                              ? Color(0xFF4A90E2)
+                                          color: _selectedUserType == 'Experienced Rider'
+                                              ? Color(0xFF2C3E50)
                                               : Colors.grey[600],
                                           size: 32,
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          'Driver',
+                                          'Experienced Rider',
                                           style: TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            color: _selectedUserType == 'Driver'
-                                                ? Color(0xFF4A90E2)
+                                            color: _selectedUserType == 'Experienced Rider'
+                                                ? Color(0xFF2C3E50)
                                                 : Colors.grey[600],
                                           ),
                                         ),
@@ -358,7 +357,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => OTPVerificationScreen(
-                                phoneNumber: '$_selectedCountryCode${_phoneController.text}',
+                                phoneNumber: '+256${_phoneController.text}',
                                 isRegistration: true,
                                 userName: _nameController.text,
                                 userType: _selectedUserType,
@@ -368,14 +367,15 @@ class _RegisterScreenState extends State<RegisterScreen>
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4A90E2),
+                        backgroundColor: const Color(0xFF4CA1AF),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        elevation: 5,
+                        elevation: 8,
+                        shadowColor: Color(0xFF4CA1AF).withOpacity(0.4),
                       ),
                       child: const Text(
-                        'Create Account',
+                        'Join Training Program',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -385,7 +385,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                     ),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 32),
 
                   // Login Redirect
                   Center(
@@ -400,12 +400,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                       child: RichText(
                         text: const TextSpan(
                           text: "Already have an account? ",
-                          style: TextStyle(color: Color(0xFF7F8C8D)),
+                          style: TextStyle(color: Color(0xFF636E72)),
                           children: [
                             TextSpan(
                               text: 'Login',
                               style: TextStyle(
-                                color: Color(0xFF4A90E2),
+                                color: Color(0xFF4CA1AF),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -414,7 +414,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                       ),
                     ),
                   ),
+                  const SizedBox(height: 24),
                 ],
+                ),
               ),
             ),
           ),
