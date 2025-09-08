@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "165605340230",
+    "project_id": "neww-3tncqs",
+    "storage_bucket": "neww-3tncqs.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165605340230:android:6f25e14f6f8634ed86c647",
+        "android_client_info": {
+          "package_name": "com.example.digitalboda_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaGFPZFCYmLyYopbUcJzTyz7seLwkpdzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

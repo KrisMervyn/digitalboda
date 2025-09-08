@@ -13,7 +13,8 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen>
     with SingleTickerProviderStateMixin {
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   String _selectedCountryCode = '+256';
   String _selectedUserType = 'New Rider';
@@ -43,7 +44,8 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _animationController.dispose();
     super.dispose();
@@ -90,200 +92,199 @@ class _RegisterScreenState extends State<RegisterScreen>
                   ),
                   const SizedBox(height: 32),
 
-                  // Full Name Field
+                  // First Name Field
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: Offset(0, 8),
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                           spreadRadius: 0,
                         ),
                       ],
                     ),
-                    child: Column(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Full Name',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2D3436),
-                              ),
-                            ),
-                          ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: TextFormField(
+                        controller: _firstNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'First Name',
+                          hintText: 'Enter your first name',
+                          border: InputBorder.none,
+                          hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
+                          labelStyle: TextStyle(color: Color(0xFF2D3436), fontSize: 14),
+                          prefixIcon: Icon(Icons.person, color: Color(0xFF4CA1AF), size: 20),
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: TextFormField(
-                            controller: _nameController,
-                            decoration: const InputDecoration(
-                              hintText: 'Enter your full name',
-                              border: InputBorder.none,
-                              hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
-                              prefixIcon: Icon(Icons.person, color: Color(0xFF4CA1AF)),
-                            ),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF2D3436),
-                            ),
-                          ),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF2D3436),
                         ),
-                        const SizedBox(height: 16),
-                      ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
+
+                  // Last Name Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: TextFormField(
+                        controller: _lastNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Last Name',
+                          hintText: 'Enter your last name',
+                          border: InputBorder.none,
+                          hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
+                          labelStyle: TextStyle(color: Color(0xFF2D3436), fontSize: 14),
+                          prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4CA1AF), size: 20),
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF2D3436),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
                   // Phone Number Field
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: Offset(0, 8),
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                           spreadRadius: 0,
                         ),
                       ],
                     ),
-                    child: Column(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Phone Number',
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              '+256',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
+                                color: Color(0xFF2C3E50),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              decoration: const InputDecoration(
+                                labelText: 'Phone Number',
+                                hintText: '7XX XXX XXX',
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
+                                labelStyle: TextStyle(color: Color(0xFF2D3436), fontSize: 14),
+                                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 16,
                                 color: Color(0xFF2D3436),
                               ),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                  child: const Text(
-                                    '+256',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2C3E50),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _phoneController,
-                                  keyboardType: TextInputType.phone,
-                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                  decoration: const InputDecoration(
-                                    hintText: '7XX XXX XXX',
-                                    border: InputBorder.none,
-                                    hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Color(0xFF2D3436),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // User Type Selection
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: Offset(0, 8),
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                           spreadRadius: 0,
                         ),
                       ],
                     ),
-                    child: Column(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Experience Level',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2D3436),
-                              ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Experience Level',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2D3436),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
+                          const SizedBox(height: 12),
+                          Row(
                             children: [
                               // New Rider Option
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () => setState(() => _selectedUserType = 'New Rider'),
                                   child: Container(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                                     decoration: BoxDecoration(
                                       color: _selectedUserType == 'New Rider'
                                           ? Color(0xFF4CA1AF).withOpacity(0.1)
                                           : Color(0xFFF8F9FA),
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                         color: _selectedUserType == 'New Rider'
                                             ? Color(0xFF4CA1AF)
                                             : Color(0xFFB0BEC5),
                                       ),
                                     ),
-                                    child: Column(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.school,
                                           color: _selectedUserType == 'New Rider'
                                               ? Color(0xFF4CA1AF)
                                               : Colors.grey[600],
-                                          size: 32,
+                                          size: 18,
                                         ),
-                                        const SizedBox(height: 8),
+                                        const SizedBox(width: 6),
                                         Text(
                                           'New Rider',
                                           style: TextStyle(
+                                            fontSize: 13,
                                             fontWeight: FontWeight.w600,
                                             color: _selectedUserType == 'New Rider'
                                                 ? Color(0xFF4CA1AF)
@@ -295,38 +296,40 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 8),
 
                               // Experienced Rider Option
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () => setState(() => _selectedUserType = 'Experienced Rider'),
                                   child: Container(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                                     decoration: BoxDecoration(
                                       color: _selectedUserType == 'Experienced Rider'
                                           ? Color(0xFF2C3E50).withOpacity(0.1)
                                           : Color(0xFFF8F9FA),
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                         color: _selectedUserType == 'Experienced Rider'
                                             ? Color(0xFF2C3E50)
                                             : Color(0xFFB0BEC5),
                                       ),
                                     ),
-                                    child: Column(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.motorcycle,
                                           color: _selectedUserType == 'Experienced Rider'
                                               ? Color(0xFF2C3E50)
                                               : Colors.grey[600],
-                                          size: 32,
+                                          size: 18,
                                         ),
-                                        const SizedBox(height: 8),
+                                        const SizedBox(width: 6),
                                         Text(
-                                          'Experienced Rider',
+                                          'Experienced',
                                           style: TextStyle(
+                                            fontSize: 13,
                                             fontWeight: FontWeight.w600,
                                             color: _selectedUserType == 'Experienced Rider'
                                                 ? Color(0xFF2C3E50)
@@ -340,9 +343,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -353,14 +355,22 @@ class _RegisterScreenState extends State<RegisterScreen>
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () {
-                        if (_nameController.text.isNotEmpty && _phoneController.text.isNotEmpty) {
+                        if (_firstNameController.text.isNotEmpty && 
+                            _lastNameController.text.isNotEmpty && 
+                            _phoneController.text.isNotEmpty) {
+                          String fullPhoneNumber = '+256${_phoneController.text.trim()}';
+                          
+                          // Remove any spaces or dashes
+                          fullPhoneNumber = fullPhoneNumber.replaceAll(RegExp(r'[\s-]'), '');
+                          
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => OTPVerificationScreen(
-                                phoneNumber: '+256${_phoneController.text}',
+                                phoneNumber: fullPhoneNumber,
                                 isRegistration: true,
-                                userName: _nameController.text,
-                                userType: _selectedUserType,
+                                firstName: _firstNameController.text.trim(),
+                                lastName: _lastNameController.text.trim(),
+                                experienceLevel: _selectedUserType,
                               ),
                             ),
                           );
