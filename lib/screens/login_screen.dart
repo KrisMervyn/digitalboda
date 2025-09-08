@@ -162,10 +162,16 @@ class _LoginScreenState extends State<LoginScreen>
                     child: ElevatedButton(
                       onPressed: () {
                         if (_phoneController.text.isNotEmpty) {
+                          String fullPhoneNumber = '+256${_phoneController.text.trim()}';
+                          
+                          // Remove any spaces or dashes
+                          fullPhoneNumber = fullPhoneNumber.replaceAll(RegExp(r'[\s-]'), '');
+                          
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => OTPVerificationScreen(
-                                phoneNumber: '+256${_phoneController.text}',
+                                phoneNumber: fullPhoneNumber,
+                                isRegistration: false,
                               ),
                             ),
                           );
