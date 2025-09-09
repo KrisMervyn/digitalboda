@@ -13,12 +13,14 @@ class ApiService {
     String? firstName,
     String? lastName,
     String? experienceLevel,
+    String? enumeratorId,
     String? fullName, // Keep for backward compatibility
   }) async {
     print('🚀 Starting registration request...');
     print('📱 Phone: $phoneNumber');
     print('👤 Name: ${firstName ?? fullName} ${lastName ?? ''}');
     print('🎯 Experience: $experienceLevel');
+    print('👨‍💼 Enumerator: $enumeratorId');
     print('🔑 Token length: ${firebaseToken.length}');
     print('🌐 URL: $baseUrl/register/');
 
@@ -40,6 +42,10 @@ class ApiService {
       
       if (experienceLevel != null) {
         requestBody['experienceLevel'] = experienceLevel;
+      }
+      
+      if (enumeratorId != null) {
+        requestBody['enumeratorId'] = enumeratorId;
       }
       
       final response = await http.post(

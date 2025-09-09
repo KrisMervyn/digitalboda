@@ -10,6 +10,7 @@ class OTPVerificationScreen extends StatefulWidget {
   final String? firstName;
   final String? lastName;
   final String? experienceLevel;
+  final String? enumeratorId;
   final String? fullName; // Keep for backward compatibility
 
   const OTPVerificationScreen({
@@ -19,6 +20,7 @@ class OTPVerificationScreen extends StatefulWidget {
     this.firstName,
     this.lastName,
     this.experienceLevel,
+    this.enumeratorId,
     this.fullName, // Deprecated, use firstName + lastName
   });
 
@@ -144,6 +146,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               firstName: widget.firstName,
               lastName: widget.lastName,
               experienceLevel: widget.experienceLevel,
+              enumeratorId: widget.enumeratorId,
             );
           } else {
             // Get existing rider profile
