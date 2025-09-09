@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/splash_screen.dart';
+import 'screens/admin_login_screen.dart';
 
 
 void main() async {
@@ -22,6 +23,9 @@ class DigitalBodaApp extends StatelessWidget {
       ),
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
+      routes: {
+        '/admin': (context) => const AdminLoginScreen(),
+      },
     );
   }
 }

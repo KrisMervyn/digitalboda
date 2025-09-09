@@ -3,7 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import '../services/api_service.dart';
-import 'home_screen.dart';
+import 'pending_approval_screen.dart';
 
 class RiderOnboardingCompleteScreen extends StatefulWidget {
   final String firstName;
@@ -149,9 +149,17 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
       );
       
       if (result['success']) {
-        // Success - navigate to home screen
+        // Success - navigate to pending approval screen
+        String referenceNumber = result['data']['reference_number'] ?? 'REF${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => PendingApprovalScreen(
+              firstName: widget.firstName,
+              lastName: widget.lastName,
+              phoneNumber: widget.phoneNumber,
+              referenceNumber: referenceNumber,
+            ),
+          ),
           (route) => false,
         );
       } else {

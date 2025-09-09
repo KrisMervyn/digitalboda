@@ -16,6 +16,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _enumeratorIdController = TextEditingController();
   String _selectedCountryCode = '+256';
   String _selectedUserType = 'New Rider';
 
@@ -47,6 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
+    _enumeratorIdController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -223,6 +225,45 @@ class _RegisterScreenState extends State<RegisterScreen>
                   ),
                   const SizedBox(height: 12),
 
+                  // Enumerator ID Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: TextFormField(
+                        controller: _enumeratorIdController,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: const InputDecoration(
+                          labelText: 'Enumerator ID',
+                          hintText: 'EN-2025-0001',
+                          border: InputBorder.none,
+                          hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
+                          labelStyle: TextStyle(color: Color(0xFF2D3436), fontSize: 14),
+                          prefixIcon: Icon(Icons.badge, color: Color(0xFF4CA1AF), size: 20),
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
+                          helperText: 'Ask your field trainer for this ID',
+                          helperStyle: TextStyle(color: Color(0xFF636E72), fontSize: 12),
+                        ),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF2D3436),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   // User Type Selection
                   Container(
                     decoration: BoxDecoration(
@@ -357,7 +398,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                       onPressed: () {
                         if (_firstNameController.text.isNotEmpty && 
                             _lastNameController.text.isNotEmpty && 
-                            _phoneController.text.isNotEmpty) {
+                            _phoneController.text.isNotEmpty &&
+                            _enumeratorIdController.text.isNotEmpty) {
                           String fullPhoneNumber = '+256${_phoneController.text.trim()}';
                           
                           // Remove any spaces or dashes
@@ -371,7 +413,15 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 firstName: _firstNameController.text.trim(),
                                 lastName: _lastNameController.text.trim(),
                                 experienceLevel: _selectedUserType,
+                                enumeratorId: _enumeratorIdController.text.trim(),
                               ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please fill in all fields including Enumerator ID'),
+                              backgroundColor: Color(0xFFE74C3C),
                             ),
                           );
                         }
