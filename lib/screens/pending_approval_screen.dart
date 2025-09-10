@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import 'home_screen.dart';
 
 class PendingApprovalScreen extends StatefulWidget {
@@ -45,6 +46,14 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen>
     ));
     
     _animationController.repeat(reverse: true);
+    
+    // Set up notification callback for status changes
+    NotificationService.setOnStatusChangeCallback(_onStatusChanged);
+    
+    // Send FCM token to backend for this user
+    _sendFCMTokenToBackend();
+    
+    // Still do initial status check, but with longer intervals
     _startStatusCheck();
   }
 
@@ -55,13 +64,47 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen>
   }
 
   void _startStatusCheck() {
-    // Check status every 30 seconds
-    Future.delayed(const Duration(seconds: 30), () {
+    // Check status every 5 minutes (reduced frequency since we have push notifications)
+    Future.delayed(const Duration(minutes: 5), () {
       if (mounted) {
         _checkApprovalStatus();
         _startStatusCheck();
       }
     });
+  }
+
+  void _onStatusChanged(String newStatus) {
+    if (!mounted) return;
+    
+    setState(() {
+      _status = newStatus;
+    });
+    
+    // Handle status change immediately
+    if (newStatus == 'APPROVED') {
+      _showApprovalSuccess(fromNotification: true);
+    } else if (newStatus == 'REJECTED') {
+      // For push notifications, we might not have the rejection reason immediately
+      // So we'll fetch the full profile to get the reason
+      _checkApprovalStatus();
+    }
+  }
+
+  Future<void> _sendFCMTokenToBackend() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        String? firebaseToken = await user.getIdToken();
+        if (firebaseToken != null) {
+          await NotificationService.sendTokenToBackendWithCredentials(
+            phoneNumber: widget.phoneNumber,
+            firebaseToken: firebaseToken,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error sending FCM token: $e');
+    }
   }
 
   Future<void> _checkApprovalStatus() async {
@@ -89,7 +132,7 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen>
             
             // If approved, navigate to home screen
             if (newStatus == 'APPROVED') {
-              _showApprovalSuccess();
+              _showApprovalSuccess(fromNotification: false);
             } else if (newStatus == 'REJECTED') {
               _showRejectionDialog(result['data']['rejection_reason']);
             }
@@ -108,7 +151,13 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen>
     }
   }
 
-  void _showApprovalSuccess() {
+  void _showApprovalSuccess({bool fromNotification = false}) {
+    if (fromNotification) {
+      // For push notifications, show a brief success message then auto-navigate
+      _showBriefApprovalMessage();
+      return;
+    }
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -165,6 +214,40 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen>
         ],
       ),
     );
+  }
+
+  void _showBriefApprovalMessage() {
+    // Show a snackbar/overlay message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 24),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '🎉 Congratulations! Your application has been approved!',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+
+    // Auto-navigate to home screen after a brief delay
+    Future.delayed(Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    });
   }
 
   void _showRejectionDialog(String? reason) {
@@ -262,268 +345,279 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 60),
-              
-              // Animated Clock Icon
-              AnimatedBuilder(
-                animation: _pulseAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _pulseAnimation.value,
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4CA1AF).withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.schedule,
-                        size: 64,
-                        color: Color(0xFF4CA1AF),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Title
-              const Text(
-                'Application Submitted!',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C3E50),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Subtitle
-              const Text(
-                'Your application is under review by your assigned enumerator.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF636E72),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Info Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Reference Number
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.confirmation_number,
-                          color: Color(0xFF4CA1AF),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Reference Number',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height - 
+                          MediaQuery.of(context).padding.top - 
+                          MediaQuery.of(context).padding.bottom - 48,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  
+                  // Animated Clock Icon
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale: _pulseAnimation.value,
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4CA1AF).withOpacity(0.1),
+                            shape: BoxShape.circle,
                           ),
+                          child: const Icon(
+                            Icons.schedule,
+                            size: 64,
+                            color: Color(0xFF4CA1AF),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Title
+                  const Text(
+                    'Application Submitted!',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C3E50),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Subtitle
+                  const Text(
+                    'Your application is under review by your assigned enumerator.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF636E72),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Info Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.referenceNumber,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Applicant Info
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.person,
-                          color: Color(0xFF4CA1AF),
-                          size: 20,
+                        // Reference Number
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.confirmation_number,
+                              color: Color(0xFF4CA1AF),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Reference Number',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Applicant',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.referenceNumber,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${widget.firstName} ${widget.lastName}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Status
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.info,
-                          color: Color(0xFF4CA1AF),
-                          size: 20,
+                        
+                        const SizedBox(height: 20),
+                        
+                        // Applicant Info
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.person,
+                              color: Color(0xFF4CA1AF),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Applicant',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Status',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
+                        const SizedBox(height: 4),
+                        Text(
+                          '${widget.firstName} ${widget.lastName}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2C3E50),
                           ),
                         ),
-                        const Spacer(),
-                        if (_isCheckingStatus)
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4CA1AF)),
+                        
+                        const SizedBox(height: 20),
+                        
+                        // Status
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.info,
+                              color: Color(0xFF4CA1AF),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Status',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_isCheckingStatus)
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4CA1AF)),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF39C12).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _status == 'PENDING_APPROVAL' ? 'Pending Review' : _status,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFF39C12),
                             ),
                           ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF39C12).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Info message
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4CA1AF).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF4CA1AF).withOpacity(0.3),
                       ),
-                      child: Text(
-                        _status == 'PENDING_APPROVAL' ? 'Pending Review' : _status,
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.notifications,
+                          color: Color(0xFF4CA1AF),
+                          size: 24,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'You\'ll receive a notification once your application is reviewed',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF2C3E50),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'This usually takes 1-2 business days',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const Expanded(child: SizedBox()),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Refresh Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: _isCheckingStatus ? null : _checkApprovalStatus,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4CA1AF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 8,
+                        shadowColor: const Color(0xFF4CA1AF).withOpacity(0.4),
+                      ),
+                      icon: _isCheckingStatus 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.refresh, color: Colors.white),
+                      label: Text(
+                        _isCheckingStatus ? 'Checking Status...' : 'Check Status',
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFF39C12),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Info message
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CA1AF).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFF4CA1AF).withOpacity(0.3),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.notifications,
-                      color: Color(0xFF4CA1AF),
-                      size: 24,
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'You\'ll receive a notification once your application is reviewed',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF2C3E50),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'This usually takes 1-2 business days',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+                  
+                  const SizedBox(height: 24),
+                ],
               ),
-              
-              const Spacer(),
-              
-              // Refresh Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _isCheckingStatus ? null : _checkApprovalStatus,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CA1AF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 8,
-                    shadowColor: const Color(0xFF4CA1AF).withOpacity(0.4),
-                  ),
-                  icon: _isCheckingStatus 
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Icon(Icons.refresh, color: Colors.white),
-                  label: Text(
-                    _isCheckingStatus ? 'Checking Status...' : 'Check Status',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
         ),
       ),

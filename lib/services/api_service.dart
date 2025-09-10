@@ -172,4 +172,60 @@ class ApiService {
       };
     }
   }
+
+  /// Update FCM token for push notifications
+  static Future<Map<String, dynamic>> updateFCMToken({
+    required String fcmToken,
+    required String phoneNumber,
+    required String firebaseToken,
+  }) async {
+    try {
+      print('📡 Updating FCM token for: $phoneNumber');
+      
+      final response = await http.put(
+        Uri.parse('$baseUrl/fcm/update-token/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $firebaseToken',
+        },
+        body: jsonEncode({
+          'fcm_token': fcmToken,
+          'phone_number': phoneNumber,
+        }),
+      ).timeout(const Duration(seconds: 10));
+
+      print('📡 FCM Response status: ${response.statusCode}');
+      print('📄 FCM Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': 'FCM token updated successfully',
+        };
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to update FCM token',
+        };
+      }
+    } catch (e) {
+      print('❌ FCM Token Update Error: $e');
+      return {
+        'success': false,
+        'error': 'Connection failed while updating FCM token.',
+      };
+    }
+  }
+
+  /// Get Firebase authentication token
+  static Future<String?> _getFirebaseToken() async {
+    try {
+      // This would get the Firebase ID token for authentication
+      // You might need to import firebase_auth and implement this properly
+      return null; // Placeholder for now
+    } catch (e) {
+      print('❌ Error getting Firebase token: $e');
+      return null;
+    }
+  }
 }
