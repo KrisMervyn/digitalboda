@@ -51,8 +51,12 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
   }
 
   Future<void> _pickImage(bool isProfilePhoto) async {
+    // Show dialog to choose camera or gallery
+    final ImageSource? source = await _showImageSourceDialog(isProfilePhoto);
+    if (source == null) return;
+    
     final XFile? image = await _picker.pickImage(
-      source: ImageSource.camera,
+      source: source,
       maxWidth: 800,
       maxHeight: 800,
       imageQuality: 85,
@@ -68,6 +72,36 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
         _errorMessage = '';
       });
     }
+  }
+
+  Future<ImageSource?> _showImageSourceDialog(bool isProfilePhoto) async {
+    return await showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(isProfilePhoto ? 'Profile Photo' : 'ID Document Photo'),
+          content: Text(isProfilePhoto 
+            ? 'Take a clear selfie or choose from gallery'
+            : 'Take a photo of your ID document or choose from gallery'),
+          actions: [
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pop(ImageSource.camera),
+              icon: Icon(Icons.camera_alt),
+              label: Text('Camera'),
+            ),
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pop(ImageSource.gallery),
+              icon: Icon(Icons.photo_library),
+              label: Text('Gallery'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _nextPage() {
@@ -139,18 +173,33 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
         return;
       }
       
-      // Submit onboarding data
+      // Submit onboarding data with photos
       Map<String, dynamic> result = await ApiService.submitOnboarding(
         phoneNumber: widget.phoneNumber,
         firebaseToken: firebaseToken,
         age: int.parse(_ageController.text),
         location: _locationController.text.trim(),
         nationalIdNumber: _nationalIdController.text.trim(),
+        profilePhotoPath: _profilePhoto?.path,
+        nationalIdPhotoPath: _nationalIdPhoto?.path,
       );
       
       if (result['success']) {
         // Success - navigate to pending approval screen
         String referenceNumber = result['data']['reference_number'] ?? 'REF${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+        bool photoVerificationTriggered = result['data']['photo_verification_triggered'] ?? false;
+        
+        // Show photo verification feedback
+        if (photoVerificationTriggered) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Photos submitted and verification started!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => PendingApprovalScreen(
@@ -163,9 +212,17 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
           (route) => false,
         );
       } else {
+        String errorMessage = result['error'] ?? 'Submission failed. Please try again.';
+        String? validationType = result['validation_error'];
+        
+        // Handle ID number mismatch specifically
+        if (validationType == 'id_number_mismatch') {
+          errorMessage = 'ID Number Mismatch!\n\n$errorMessage\n\nPlease check your ID document photo and the entered ID number.';
+        }
+        
         setState(() {
           _isLoading = false;
-          _errorMessage = result['error'] ?? 'Submission failed. Please try again.';
+          _errorMessage = errorMessage;
         });
       }
     } catch (e) {
