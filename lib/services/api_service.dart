@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // Change this to your Django server URL
-  static const String baseUrl = 'http://192.168.1.19:8000/api'; // For Android emulator
+  static const String baseUrl = 'http://192.168.1.3:8000/api'; // For Android emulator
   // static const String baseUrl = 'http://localhost:8000/api'; // For iOS simulator
   // static const String baseUrl = 'http://YOUR_COMPUTER_IP:8000/api'; // For real device
 
@@ -125,30 +125,50 @@ class ApiService {
     required int age,
     required String location,
     required String nationalIdNumber,
+    String? profilePhotoPath,
+    String? nationalIdPhotoPath,
   }) async {
     print('🚀 Starting onboarding submission...');
     print('📱 Phone: $phoneNumber');
     print('👤 Age: $age');
     print('📍 Location: $location');
     print('🆔 National ID: $nationalIdNumber');
+    print('📸 Profile photo: ${profilePhotoPath != null ? "✓" : "✗"}');
+    print('🆔 ID photo: ${nationalIdPhotoPath != null ? "✓" : "✗"}');
     print('🌐 URL: $baseUrl/onboarding/submit/');
 
     try {
-      final Map<String, dynamic> requestBody = {
+      // Create multipart request if photos are provided
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/onboarding/submit/'));
+      
+      // Add headers
+      request.headers.addAll({
+        'Authorization': 'Bearer $firebaseToken',
+      });
+      
+      // Add form fields
+      request.fields.addAll({
         'phoneNumber': phoneNumber,
-        'age': age,
+        'age': age.toString(),
         'location': location,
         'nationalIdNumber': nationalIdNumber,
-      };
+      });
       
-      final response = await http.post(
-        Uri.parse('$baseUrl/onboarding/submit/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $firebaseToken',
-        },
-        body: jsonEncode(requestBody),
-      ).timeout(const Duration(seconds: 10));
+      // Add photo files if they exist
+      if (profilePhotoPath != null) {
+        final profileFile = await http.MultipartFile.fromPath('profile_photo', profilePhotoPath);
+        request.files.add(profileFile);
+        print('📸 Added profile photo to request');
+      }
+      
+      if (nationalIdPhotoPath != null) {
+        final idFile = await http.MultipartFile.fromPath('national_id_photo', nationalIdPhotoPath);
+        request.files.add(idFile);
+        print('🆔 Added ID photo to request');
+      }
+      
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
 
       print('📡 Response status: ${response.statusCode}');
       print('📄 Response body: ${response.body}');

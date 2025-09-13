@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/admin_service.dart';
+import '../services/enumerator_service.dart';
 import 'admin_dashboard_screen.dart';
+import 'enumerator_dashboard_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({Key? key}) : super(key: key);
@@ -37,13 +39,35 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     });
 
     try {
-      Map<String, dynamic> result = await AdminService.login(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
+      String username = _usernameController.text.trim();
+      String password = _passwordController.text;
+      
+      // First, try enumerator login if username starts with EN-
+      if (username.startsWith('EN-')) {
+        Map<String, dynamic> enumeratorResult = await EnumeratorService.login(
+          enumeratorId: username,
+          password: password,
+        );
+        
+        if (enumeratorResult['success']) {
+          // Enumerator login successful - navigate to enumerator dashboard
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const EnumeratorDashboardScreen(),
+            ),
+          );
+          return;
+        }
+      }
+      
+      // If not an enumerator ID or enumerator login failed, try admin login
+      Map<String, dynamic> adminResult = await AdminService.login(
+        username: username,
+        password: password,
       );
 
-      if (result['success']) {
-        // Login successful - navigate to admin dashboard
+      if (adminResult['success']) {
+        // Admin login successful - navigate to admin dashboard
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => const AdminDashboardScreen(),
@@ -52,7 +76,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       } else {
         setState(() {
           _isLoading = false;
-          _errorMessage = result['error'] ?? 'Login failed';
+          _errorMessage = adminResult['error'] ?? 'Login failed';
         });
       }
     } catch (e) {
@@ -94,7 +118,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 const SizedBox(height: 32),
                 
                 const Text(
-                  'Admin Login',
+                  'Staff Login',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -103,7 +127,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Access the DigitalBoda Admin Dashboard',
+                  'Admin & Enumerator Access Portal',
                   style: TextStyle(
                     fontSize: 16,
                     color: Color(0xFF636E72),
