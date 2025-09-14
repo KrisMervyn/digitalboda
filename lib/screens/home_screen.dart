@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/api_service.dart';
+import '../services/digital_literacy_service.dart';
 import 'pending_approval_screen.dart';
 import 'login_screen.dart';
+import 'training_modules_screen.dart';
+import 'leaderboard_screen.dart';
+import 'notifications_screen.dart';
+import 'certificates_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -15,11 +20,16 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   Map<String, dynamic>? _riderData;
+  int _selectedIndex = 0;
+  List<Map<String, dynamic>> _trainingModules = [];
+  Map<String, dynamic>? _riderProgress;
+  List<Map<String, dynamic>> _upcomingSessions = [];
 
   @override
   void initState() {
     super.initState();
     _checkRiderStatus();
+    _loadDigitalLiteracyData();
   }
 
   Future<void> _checkRiderStatus() async {
@@ -98,6 +108,45 @@ class _HomeScreenState extends State<HomeScreen> {
         _errorMessage = 'Connection error. Please try again.';
       });
     }
+  }
+
+  Future<void> _loadDigitalLiteracyData() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Load training modules
+      final modulesResult = await DigitalLiteracyService.getTrainingModules();
+      if (modulesResult['success']) {
+        setState(() {
+          _trainingModules = List<Map<String, dynamic>>.from(modulesResult['data'] ?? []);
+        });
+      }
+
+      // Load rider progress
+      final progressResult = await DigitalLiteracyService.getRiderProgress(user.phoneNumber ?? '');
+      if (progressResult['success']) {
+        setState(() {
+          _riderProgress = progressResult['data'];
+        });
+      }
+
+      // Load upcoming sessions
+      final sessionsResult = await DigitalLiteracyService.getUpcomingSessions(user.phoneNumber ?? '');
+      if (sessionsResult['success']) {
+        setState(() {
+          _upcomingSessions = List<Map<String, dynamic>>.from(sessionsResult['data']['sessions'] ?? []);
+        });
+      }
+    } catch (e) {
+      print('Error loading digital literacy data: $e');
+    }
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   void _showRejectionDialog(String? reason) {
@@ -295,13 +344,13 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Home screen for approved riders
+    // Home screen with bottom navigation
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF2C3E50),
         elevation: 0,
         title: Text(
-          'Welcome ${_riderData?['first_name'] ?? _riderData?['firstName'] ?? 'Rider'}!',
+          _getPageTitle(_selectedIndex),
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -314,6 +363,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _logout();
               } else if (value == 'refresh') {
                 _checkRiderStatus();
+                _loadDigitalLiteracyData();
               }
             },
             itemBuilder: (context) => [
@@ -342,153 +392,532 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF2C3E50), Color(0xFF4CA1AF)],
-          ),
+      body: _getSelectedPage(_selectedIndex),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 0,
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                
-                // Success Icon
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.school,
-                    size: 80,
-                    color: Colors.white,
-                  ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.leaderboard),
+              label: 'Leaderboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'Notifications',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.card_membership),
+              label: 'Certificates',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: const Color(0xFF4CA1AF),
+          unselectedItemColor: Colors.grey[600],
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          elevation: 20,
+          onTap: _onItemTapped,
+        ),
+      ),
+    );
+  }
+
+  String _getPageTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'Digital Literacy Training';
+      case 1:
+        return 'Leaderboard';
+      case 2:
+        return 'Notifications';
+      case 3:
+        return 'Certificates';
+      default:
+        return 'DigitalBoda';
+    }
+  }
+
+  Widget _getSelectedPage(int index) {
+    switch (index) {
+      case 0:
+        return _buildHomePage();
+      case 1:
+        return const LeaderboardScreen();
+      case 2:
+        return const NotificationsScreen();
+      case 3:
+        return const CertificatesScreen();
+      default:
+        return _buildHomePage();
+    }
+  }
+
+  Widget _buildHomePage() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2C3E50), Color(0xFF4CA1AF)],
+        ),
+      ),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                
-                const SizedBox(height: 32),
-                
-                // Welcome Message
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.school,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome ${_riderData?['first_name'] ?? 'Rider'}!',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'ID: ${_riderData?['unique_id'] ?? 'Loading...'}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'APPROVED',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (_riderProgress != null) _buildProgressCard(),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Upcoming Sessions
+              if (_upcomingSessions.isNotEmpty) ...[
                 const Text(
-                  'Welcome to DigitalBoda Training!',
+                  'Upcoming Sessions',
                   style: TextStyle(
-                    fontSize: 28,
+                    color: Colors.white,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                
-                const SizedBox(height: 16),
-                
-                const Text(
-                  'Your application has been approved! You can now access all training modules and start your journey to become a certified rider.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _upcomingSessions.length,
+                    itemBuilder: (context, index) {
+                      final session = _upcomingSessions[index];
+                      return _buildSessionCard(session);
+                    },
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                
-                const SizedBox(height: 40),
-                
-                // Rider Info Card
+                const SizedBox(height: 24),
+              ],
+              
+              // Training Modules Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Training Modules',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TrainingModulesScreen(
+                            modules: _trainingModules,
+                            riderProgress: _riderProgress,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'View All',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Training Modules Grid
+              if (_trainingModules.isNotEmpty)
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: _trainingModules.take(4).length,
+                  itemBuilder: (context, index) {
+                    final module = _trainingModules[index];
+                    return _buildModuleCard(module);
+                  },
+                ),
+              
+              if (_trainingModules.isEmpty)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                    ),
                   ),
-                  child: Column(
+                  child: const Column(
                     children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Rider ID: ${_riderData?['unique_id'] ?? 'Generating...'}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                      Icon(
+                        Icons.school_outlined,
+                        size: 64,
+                        color: Colors.white54,
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Status: Approved',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                      SizedBox(height: 16),
+                      Text(
+                        'Training modules are loading...',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
-                
-                const Spacer(),
-                
-                // Start Training Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Navigate to training modules
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Training modules coming soon!'),
-                          backgroundColor: Color(0xFF4CA1AF),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF2C3E50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 8,
+              
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressCard() {
+    final progress = _riderProgress!;
+    final totalPoints = progress['total_points'] ?? 0;
+    final totalModules = progress['total_modules'] ?? 4;
+    final completedModules = progress['completed_modules'] ?? 0;
+    final progressPercentage = totalModules > 0 ? (completedModules / totalModules * 100).round() : 0;
+    
+    return Column(
+      children: [
+        const Divider(color: Colors.white24),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Learning Progress',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
                     ),
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text(
-                      'Start Training',
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$completedModules of $totalModules modules',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$totalPoints',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  'points earned',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        LinearProgressIndicator(
+          value: progressPercentage / 100,
+          backgroundColor: Colors.white.withOpacity(0.2),
+          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '$progressPercentage% Complete',
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSessionCard(Map<String, dynamic> session) {
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CA1AF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.schedule,
+                  color: Color(0xFF4CA1AF),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      session['session_title'] ?? 'Training Session',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      DigitalLiteracyService.formatDate(session['scheduled_date'] ?? ''),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            session['location_name'] ?? 'Location TBD',
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(
+                Icons.people,
+                size: 16,
+                color: Colors.grey,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${session['registered_count'] ?? 0}/${session['capacity'] ?? 20} registered',
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModuleCard(Map<String, dynamic> module) {
+    final skillInfo = DigitalLiteracyService.getSkillLevelInfo(module['skill_level'] ?? 'BEGINNER');
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TrainingModulesScreen(
+              modules: _trainingModules,
+              riderProgress: _riderProgress,
+              selectedModuleId: module['id'],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 0,
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    module['icon'] ?? '📚',
+                    style: const TextStyle(fontSize: 32),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color(skillInfo['color']).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      skillInfo['label'],
                       style: TextStyle(
-                        fontSize: 18,
+                        color: Color(skillInfo['color']),
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                module['title'] ?? 'Training Module',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-                
-                const SizedBox(height: 32),
-              ],
-            ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${module['session_count'] ?? 0} sessions',
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${module['points_value'] ?? 0} points',
+                style: const TextStyle(
+                  color: Color(0xFF4CA1AF),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
       ),
