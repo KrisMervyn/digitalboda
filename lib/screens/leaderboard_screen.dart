@@ -228,23 +228,73 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           children: [
             // Tab bar
             Container(
-              margin: const EdgeInsets.all(20),
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(25),
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: TabBar(
                 controller: _tabController,
                 indicator: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
+                indicatorPadding: EdgeInsets.zero,
                 labelColor: const Color(0xFF2C3E50),
-                unselectedLabelColor: Colors.white,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                unselectedLabelColor: Colors.white.withOpacity(0.8),
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 15,
+                ),
+                dividerColor: Colors.transparent,
+                overlayColor: MaterialStateProperty.all(Colors.transparent),
+                splashFactory: NoSplash.splashFactory,
                 tabs: const [
-                  Tab(text: '🏆 Rankings'),
-                  Tab(text: '🏅 Achievements'),
+                  Tab(
+                    height: 44,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('🏆', style: TextStyle(fontSize: 16)),
+                        SizedBox(width: 6),
+                        Text('Rankings'),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    height: 44,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('🏅', style: TextStyle(fontSize: 16)),
+                        SizedBox(width: 6),
+                        Text('Achievements'),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -555,26 +605,45 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     final top3 = _leaderboardData.take(3).toList();
     
     return Container(
-      height: 200,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // 2nd place
-          if (top3.length > 1)
-            Expanded(child: _buildPodiumPosition(top3[1], 2, 140, Colors.grey.shade400)),
-          
-          const SizedBox(width: 8),
-          
-          // 1st place  
-          if (top3.isNotEmpty)
-            Expanded(child: _buildPodiumPosition(top3[0], 1, 180, Colors.amber)),
-          
-          const SizedBox(width: 8),
-          
-          // 3rd place
-          if (top3.length > 2)
-            Expanded(child: _buildPodiumPosition(top3[2], 3, 120, Colors.orange.shade400)),
-        ],
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        constraints: const BoxConstraints(
+          minHeight: 180,
+          maxHeight: 220,
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // 2nd place
+              if (top3.length > 1)
+                Expanded(
+                  flex: 3,
+                  child: _buildPodiumPosition(top3[1], 2, 140, Colors.grey.shade400),
+                ),
+              
+              const SizedBox(width: 8),
+              
+              // 1st place  
+              if (top3.isNotEmpty)
+                Expanded(
+                  flex: 4,
+                  child: _buildPodiumPosition(top3[0], 1, 180, Colors.amber),
+                ),
+              
+              const SizedBox(width: 8),
+              
+              // 3rd place
+              if (top3.length > 2)
+                Expanded(
+                  flex: 3,
+                  child: _buildPodiumPosition(top3[2], 3, 120, Colors.orange.shade400),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -595,53 +664,109 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          medal,
-          style: const TextStyle(fontSize: 32),
+        // Medal icon with background
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              medal,
+              style: const TextStyle(fontSize: 20),
+            ),
+          ),
         ),
         const SizedBox(height: 8),
-        Container(
-          height: height,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.8),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '#$position',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  rider['rider_name'] ?? 'Unknown',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${rider['total_points']} pts',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+        // Podium block
+        Expanded(
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  color.withOpacity(0.9),
+                  color.withOpacity(0.7),
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
                 ),
               ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Position number
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '#$position',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Rider name
+                  Flexible(
+                    child: Text(
+                      rider['rider_name'] ?? 'Unknown',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Points
+                  Text(
+                    '${rider['total_points']} pts',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

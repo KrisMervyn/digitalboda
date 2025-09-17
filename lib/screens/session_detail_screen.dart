@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/digital_literacy_service.dart';
@@ -22,22 +23,30 @@ class SessionDetailScreen extends StatefulWidget {
 
 class _SessionDetailScreenState extends State<SessionDetailScreen> {
   final TextEditingController _stageIdController = TextEditingController();
+  final TextEditingController _enumeratorIdController = TextEditingController();
   bool _isLoading = false;
   bool _isVerifying = false;
   bool _isRegistered = false;
+  bool _isRegisteredForSession = false;
+  bool _isRegisteringForSession = false;
   String _errorMessage = '';
   String _successMessage = '';
   Map<String, dynamic>? _verificationResult;
+  Map<String, dynamic>? _attendanceWindowStatus;
+  Timer? _statusUpdateTimer;
 
   @override
   void initState() {
     super.initState();
     _checkRegistrationStatus();
+    _startRealTimeUpdates();
   }
 
   @override
   void dispose() {
     _stageIdController.dispose();
+    _enumeratorIdController.dispose();
+    _statusUpdateTimer?.cancel();
     super.dispose();
   }
 
@@ -45,7 +54,8 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
     // Mock check - in real implementation, check if user is already registered
     // This would call an API to check registration status
     setState(() {
-      _isRegistered = false; // For demo purposes
+      _isRegistered = false; // For demo purposes (attendance)
+      _isRegisteredForSession = false; // For demo purposes (session registration)
     });
   }
 
@@ -107,6 +117,11 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
       return;
     }
 
+    if (_enumeratorIdController.text.trim().isEmpty) {
+      _showSnackBar('Please enter the enumerator ID provided by your trainer', Colors.orange);
+      return;
+    }
+
     if (_verificationResult == null || !(_verificationResult!['valid'] ?? false)) {
       _showSnackBar('Please verify your stage ID first', Colors.orange);
       return;
@@ -121,9 +136,10 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
     try {
       final result = await DigitalLiteracyService.registerAttendance(
         phoneNumber: user.phoneNumber ?? '',
-        scheduleId: widget.schedule?['id'] ?? 1,
-        trainerId: widget.schedule?['trainer_id'] ?? 'trainer_001',
+        scheduleId: widget.schedule?['schedule_id'] ?? 1,
+        enumeratorId: _enumeratorIdController.text.trim().toUpperCase(),
         stageId: _stageIdController.text.trim().toUpperCase(),
+        sessionData: widget.schedule,
       );
 
       setState(() {
@@ -148,6 +164,91 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
         _errorMessage = 'Registration failed: $e';
       });
       _showSnackBar('Registration failed. Please try again.', Colors.red);
+    }
+  }
+
+  Future<void> _registerForSession() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showSnackBar('Please login to register for session', Colors.red);
+      return;
+    }
+
+    final phoneNumber = user.phoneNumber;
+    if (phoneNumber == null) {
+      _showSnackBar('Unable to get phone number', Colors.red);
+      return;
+    }
+
+    final schedule = widget.schedule;
+    if (schedule == null) {
+      _showSnackBar('Session information not available', Colors.red);
+      return;
+    }
+
+    setState(() {
+      _isRegisteringForSession = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final result = await DigitalLiteracyService.registerForSession(
+        phoneNumber: phoneNumber,
+        scheduleId: schedule['id'] ?? 1,
+      );
+
+      setState(() {
+        _isRegisteringForSession = false;
+      });
+
+      if (result['success']) {
+        setState(() {
+          _isRegisteredForSession = true;
+          _successMessage = result['message'] ?? 'Successfully registered for session!';
+        });
+        _showSnackBar('Successfully registered for session!', Colors.green);
+      } else {
+        _showSnackBar(
+          result['error'] ?? 'Failed to register for session',
+          Colors.red,
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isRegisteringForSession = false;
+      });
+      _showSnackBar('Registration failed: $e', Colors.red);
+    }
+  }
+
+  void _startRealTimeUpdates() {
+    if (widget.schedule != null) {
+      _updateAttendanceWindowStatus();
+      
+      // Update status every 30 seconds
+      _statusUpdateTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+        if (mounted) {
+          _updateAttendanceWindowStatus();
+        }
+      });
+    }
+  }
+
+  Future<void> _updateAttendanceWindowStatus() async {
+    if (widget.schedule == null) return;
+    
+    try {
+      final result = await DigitalLiteracyService.checkAttendanceWindow(
+        scheduleId: widget.schedule!['id'] ?? 1,
+      );
+      
+      if (result['success'] && mounted) {
+        setState(() {
+          _attendanceWindowStatus = result['data'];
+        });
+      }
+    } catch (e) {
+      print('Error updating attendance window status: $e');
     }
   }
 
@@ -216,6 +317,11 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                 
                 // Schedule Information (if available)
                 if (widget.schedule != null) _buildScheduleInfo(),
+                
+                const SizedBox(height: 24),
+                
+                // Session Registration
+                if (widget.schedule != null) _buildSessionRegistration(),
                 
                 const SizedBox(height: 24),
                 
@@ -560,6 +666,149 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
     );
   }
 
+  Widget _buildSessionRegistration() {
+    final schedule = widget.schedule!;
+    
+    if (_isRegisteredForSession) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.event_available,
+              color: Colors.blue,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Registered for Session',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_successMessage.isNotEmpty)
+              Text(
+                _successMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            const SizedBox(height: 16),
+            const Text(
+              'You are now registered for this training session. Please arrive on time to register your attendance.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Session Registration',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2C3E50),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Register for this training session to secure your spot. Registration is required to participate.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Session capacity info
+          Row(
+            children: [
+              const Icon(Icons.people, color: Colors.blue, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Available spots: ${(schedule['capacity'] ?? 20) - (schedule['registered_count'] ?? 0)}/${schedule['capacity'] ?? 20}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Registration button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isRegisteringForSession ? null : _registerForSession,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4CA1AF),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: _isRegisteringForSession
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.event_available),
+              label: Text(
+                _isRegisteringForSession ? 'Registering...' : 'Register for Session',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAttendanceSection() {
     if (_isRegistered) {
       return Container(
@@ -627,6 +876,54 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          
+          // Real-time attendance window status
+          if (_attendanceWindowStatus != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (_attendanceWindowStatus!['is_open'] as bool? ?? false)
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: (_attendanceWindowStatus!['is_open'] as bool? ?? false)
+                      ? Colors.green
+                      : Colors.orange,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    (_attendanceWindowStatus!['is_open'] as bool? ?? false)
+                        ? Icons.access_time
+                        : Icons.timer_off,
+                    color: (_attendanceWindowStatus!['is_open'] as bool? ?? false)
+                        ? Colors.green
+                        : Colors.orange,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      DigitalLiteracyService.formatAttendanceWindowStatus(_attendanceWindowStatus!),
+                      style: TextStyle(
+                        color: (_attendanceWindowStatus!['is_open'] as bool? ?? false)
+                            ? Colors.green
+                            : Colors.orange,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          
           const Text(
             'Enter your stage ID to verify your location and register attendance for this session.',
             style: TextStyle(
@@ -655,6 +952,23 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                 _verificationResult = null;
               });
             },
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Enumerator ID input
+          TextFormField(
+            controller: _enumeratorIdController,
+            decoration: InputDecoration(
+              labelText: 'Enumerator ID',
+              hintText: 'Enter trainer ID provided by enumerator (e.g., EN-2025-0001)',
+              prefixIcon: const Icon(Icons.person_outline),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              helperText: 'Ask your trainer for their enumerator ID',
+            ),
+            textCapitalization: TextCapitalization.characters,
           ),
           
           const SizedBox(height: 16),
@@ -730,7 +1044,10 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: (_verificationResult?['valid'] == true && !_isLoading)
+                  onPressed: (_verificationResult?['valid'] == true && 
+                             !_isLoading && 
+                             _enumeratorIdController.text.trim().isNotEmpty &&
+                             (_attendanceWindowStatus?['is_open'] ?? true))
                       ? _registerAttendance
                       : null,
                   style: ElevatedButton.styleFrom(

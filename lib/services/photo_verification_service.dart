@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class PhotoVerificationService {
   // Use same base URL as your existing ApiService
-  static const String baseUrl = 'http://192.168.1.3:8000/api';
+  static const String baseUrl = 'http://192.168.1.19:8000/api';
 
   /// Login rider and get authentication token
   static Future<Map<String, dynamic>> loginRider({
