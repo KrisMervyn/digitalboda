@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/api_service.dart';
 import 'home_screen.dart';
 import 'rider_onboarding_complete_screen.dart';
+import 'package:flutter/foundation.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -72,6 +73,27 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     });
 
     try {
+      // Enhanced phone number validation
+      if (!widget.phoneNumber.startsWith('+')) {
+        throw FirebaseAuthException(
+          code: 'invalid-phone-number',
+          message: 'Phone number must start with country code (+)',
+        );
+      }
+      
+      if (widget.phoneNumber.length < 10) {
+        throw FirebaseAuthException(
+          code: 'invalid-phone-number', 
+          message: 'Phone number is too short',
+        );
+      }
+
+      // Configure Firebase Auth to disable reCAPTCHA for better UX
+      await FirebaseAuth.instance.setSettings(
+        appVerificationDisabledForTesting: false,
+        userAccessGroup: null,
+      );
+      
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: widget.phoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) async {
@@ -79,9 +101,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           await _signInWithCredential(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
+          String errorMsg = _getFriendlyErrorMessage(e);
+          
           setState(() {
             _isLoading = false;
-            _errorMessage = _getFriendlyErrorMessage(e);
+            _errorMessage = errorMsg;
           });
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -95,6 +119,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           _verificationId = verificationId;
         },
         forceResendingToken: _resendToken > 0 ? _resendToken : null,
+        timeout: const Duration(seconds: 60),
       );
     } catch (e) {
       setState(() {
@@ -217,6 +242,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
     _signInWithCredential(credential);
   }
+
 
   @override
   void dispose() {
@@ -421,6 +447,24 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            // Manual verification option
+            if (_verificationId.isNotEmpty)
+              Center(
+                child: Column(
+                  children: [
+                    const Text(
+                      'Having trouble receiving the code?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF636E72),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
                 SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 24 : 48),
               ],
             ),

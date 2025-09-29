@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // Change this to your Django server URL
-  static const String baseUrl = 'http://192.168.1.19:8000/api'; // For Android emulator
+  static const String baseUrl = 'https://dashboard.digitalboda.com/api'; // Production API endpoint
   // static const String baseUrl = 'http://localhost:8000/api'; // For iOS simulator
   // static const String baseUrl = 'http://YOUR_COMPUTER_IP:8000/api'; // For real device
 
