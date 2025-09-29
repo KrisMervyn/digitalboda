@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 
 class DigitalLiteracyService {
-  static const String baseUrl = 'http://192.168.1.19:8000/api';
+  static const String baseUrl = 'https://dashboard.digitalboda.com/api';
   
   // Get all digital literacy training modules (REAL API)
   static Future<Map<String, dynamic>> getTrainingModules() async {

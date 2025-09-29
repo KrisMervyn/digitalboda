@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'screens/admin_login_screen.dart';
 import 'services/notification_service.dart';
@@ -13,7 +14,11 @@ void main() async {
   debugPaintSizeEnabled = false;
   
   // Initialize Firebase
-  await Firebase.initializeApp();
+  print('DEBUG: Initializing Firebase...');
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  print('DEBUG: Firebase initialized successfully');
   
   // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
