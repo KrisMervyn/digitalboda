@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import 'home_screen.dart';
 import 'rider_onboarding_complete_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -182,6 +183,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           }
           
           if (result['success']) {
+            // Save authentication data for persistent login
+            await AuthService.saveLoginData(
+              token: firebaseToken,
+              userData: result['data'],
+            );
+            
             // Success - navigate based on registration or login
             if (widget.isRegistration) {
               // New registration - go to onboarding
@@ -196,7 +203,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 ),
               );
             } else {
-              // Existing user login - go to home
+              // Existing user login - go directly to home (persistent login)
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
               );

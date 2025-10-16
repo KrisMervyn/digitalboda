@@ -26,7 +26,6 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _stageNameController = TextEditingController();
-  final _idNumberController = TextEditingController();
   final _stageLocationController = TextEditingController();
   
   // Form data
@@ -54,7 +53,6 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _stageNameController.dispose();
-    _idNumberController.dispose();
     _stageLocationController.dispose();
     super.dispose();
   }
@@ -389,13 +387,6 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
           ),
           const SizedBox(height: 24),
           
-          _buildInputField(
-            label: '${_selectedIdType} Number',
-            controller: _idNumberController,
-            icon: Icons.credit_card,
-            hint: 'Enter your ${_selectedIdType.toLowerCase()} number',
-          ),
-          const SizedBox(height: 24),
           
           // Photo upload sections
           Row(
@@ -411,8 +402,7 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _idNumberController.text.isNotEmpty && 
-                         _idPhotoFrontTaken && _idPhotoBackTaken ? _nextPage : null,
+              onPressed: _idPhotoFrontTaken && _idPhotoBackTaken ? _nextPage : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4CA1AF),
                 shape: RoundedRectangleBorder(

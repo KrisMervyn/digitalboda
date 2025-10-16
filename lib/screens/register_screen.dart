@@ -18,7 +18,6 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _phoneController = TextEditingController();
   final _enumeratorIdController = TextEditingController();
   String _selectedCountryCode = '+256';
-  String _selectedUserType = 'New Rider';
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -27,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   @override
   void initState() {
     super.initState();
+    _enumeratorIdController.text = 'EN-2025-';
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -246,145 +246,19 @@ class _RegisterScreenState extends State<RegisterScreen>
                         textCapitalization: TextCapitalization.characters,
                         decoration: const InputDecoration(
                           labelText: 'Enumerator ID',
-                          hintText: 'EN-2025-0001',
+                          hintText: '0001',
                           border: InputBorder.none,
                           hintStyle: TextStyle(color: Color(0xFFB2BEC3)),
                           labelStyle: TextStyle(color: Color(0xFF2D3436), fontSize: 14),
                           prefixIcon: Icon(Icons.badge, color: Color(0xFF4CA1AF), size: 20),
                           contentPadding: EdgeInsets.symmetric(vertical: 8),
-                          helperText: 'Ask your field trainer for this ID',
+                          helperText: 'Enter your enumerator number (digits only)',
                           helperStyle: TextStyle(color: Color(0xFF636E72), fontSize: 12),
                         ),
                         style: const TextStyle(
                           fontSize: 16,
                           color: Color(0xFF2D3436),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // User Type Selection
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Experience Level',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF2D3436),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              // New Rider Option
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _selectedUserType = 'New Rider'),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                                    decoration: BoxDecoration(
-                                      color: _selectedUserType == 'New Rider'
-                                          ? Color(0xFF4CA1AF).withOpacity(0.1)
-                                          : Color(0xFFF8F9FA),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: _selectedUserType == 'New Rider'
-                                            ? Color(0xFF4CA1AF)
-                                            : Color(0xFFB0BEC5),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.school,
-                                          color: _selectedUserType == 'New Rider'
-                                              ? Color(0xFF4CA1AF)
-                                              : Colors.grey[600],
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'New Rider',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: _selectedUserType == 'New Rider'
-                                                ? Color(0xFF4CA1AF)
-                                                : Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // Experienced Rider Option
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _selectedUserType = 'Experienced Rider'),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                                    decoration: BoxDecoration(
-                                      color: _selectedUserType == 'Experienced Rider'
-                                          ? Color(0xFF2C3E50).withOpacity(0.1)
-                                          : Color(0xFFF8F9FA),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: _selectedUserType == 'Experienced Rider'
-                                            ? Color(0xFF2C3E50)
-                                            : Color(0xFFB0BEC5),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.motorcycle,
-                                          color: _selectedUserType == 'Experienced Rider'
-                                              ? Color(0xFF2C3E50)
-                                              : Colors.grey[600],
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Experienced',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: _selectedUserType == 'Experienced Rider'
-                                                ? Color(0xFF2C3E50)
-                                                : Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
                       ),
                     ),
                   ),
@@ -412,7 +286,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 isRegistration: true,
                                 firstName: _firstNameController.text.trim(),
                                 lastName: _lastNameController.text.trim(),
-                                experienceLevel: _selectedUserType,
                                 enumeratorId: _enumeratorIdController.text.trim(),
                               ),
                             ),

@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/environment.dart';
 
 class ApiService {
-  // Change this to your Django server URL
-  static const String baseUrl = 'https://dashboard.digitalboda.com/api'; // Production API endpoint
-  // static const String baseUrl = 'http://localhost:8000/api'; // For iOS simulator
-  // static const String baseUrl = 'http://YOUR_COMPUTER_IP:8000/api'; // For real device
+  // Dynamic base URL based on environment
+  static String get baseUrl => EnvironmentConfig.apiBaseUrl;
 
   static Future<Map<String, dynamic>> registerRider({
     required String phoneNumber,
@@ -122,17 +121,16 @@ class ApiService {
   static Future<Map<String, dynamic>> submitOnboarding({
     required String phoneNumber,
     required String firebaseToken,
-    required int age,
-    required String location,
-    required String nationalIdNumber,
+    int? age,
+    String? ageBracket,
+    required String association,
     String? profilePhotoPath,
     String? nationalIdPhotoPath,
   }) async {
     print('🚀 Starting onboarding submission...');
     print('📱 Phone: $phoneNumber');
     print('👤 Age: $age');
-    print('📍 Location: $location');
-    print('🆔 National ID: $nationalIdNumber');
+    print('🏢 Association: $association');
     print('📸 Profile photo: ${profilePhotoPath != null ? "✓" : "✗"}');
     print('🆔 ID photo: ${nationalIdPhotoPath != null ? "✓" : "✗"}');
     print('🌐 URL: $baseUrl/onboarding/submit/');
@@ -149,10 +147,16 @@ class ApiService {
       // Add form fields
       request.fields.addAll({
         'phoneNumber': phoneNumber,
-        'age': age.toString(),
-        'location': location,
-        'nationalIdNumber': nationalIdNumber,
+        'association': association,
       });
+      
+      if (age != null) {
+        request.fields['age'] = age.toString();
+      }
+      
+      if (ageBracket != null) {
+        request.fields['ageBracket'] = ageBracket;
+      }
       
       // Add photo files if they exist
       if (profilePhotoPath != null) {
@@ -194,6 +198,48 @@ class ApiService {
   }
 
   /// Update FCM token for push notifications
+  static Future<Map<String, dynamic>> getAssociations() async {
+    try {
+      print('🏢 Fetching associations from API...');
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/associations/'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      print('📡 Associations response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success']) {
+          print('✅ Successfully fetched ${data['count']} associations');
+          return {
+            'success': true,
+            'data': data['data'],
+          };
+        } else {
+          return {
+            'success': false,
+            'error': data['error'] ?? 'Failed to fetch associations',
+          };
+        }
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to fetch associations from server',
+        };
+      }
+    } catch (e) {
+      print('❌ Error fetching associations: $e');
+      return {
+        'success': false,
+        'error': 'Connection failed. Please check your internet and try again.',
+      };
+    }
+  }
+
   static Future<Map<String, dynamic>> updateFCMToken({
     required String fcmToken,
     required String phoneNumber,

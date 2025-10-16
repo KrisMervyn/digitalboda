@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/environment.dart';
 
 class PhotoVerificationService {
-  // Use same base URL as your existing ApiService
-  static const String baseUrl = 'https://dashboard.digitalboda.com/api';
+  // Use dynamic base URL based on environment
+  static String get baseUrl => EnvironmentConfig.apiBaseUrl;
 
   /// Login rider and get authentication token
   static Future<Map<String, dynamic>> loginRider({

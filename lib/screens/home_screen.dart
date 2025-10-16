@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/api_service.dart';
 import '../services/digital_literacy_service.dart';
+import '../services/simple_training_service.dart';
 import 'pending_approval_screen.dart';
 import 'login_screen.dart';
-import 'training_modules_screen.dart';
+import 'simple_training_modules_screen.dart';
+import 'simple_training_progress_screen.dart';
 import 'leaderboard_screen.dart';
 import 'notifications_screen.dart';
 import 'certificates_screen.dart';
@@ -115,31 +117,28 @@ class _HomeScreenState extends State<HomeScreen> {
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      // Load training modules
-      final modulesResult = await DigitalLiteracyService.getTrainingModules();
+      // Load training modules using new simplified service
+      final modulesResult = await SimpleTrainingService.getAvailableModules();
       if (modulesResult['success']) {
         setState(() {
           _trainingModules = List<Map<String, dynamic>>.from(modulesResult['data'] ?? []);
         });
       }
 
-      // Load rider progress
-      final progressResult = await DigitalLiteracyService.getRiderProgress(user.phoneNumber ?? '');
+      // Load rider progress using new simplified service
+      final progressResult = await SimpleTrainingService.getRiderProgress(user.phoneNumber ?? '');
       if (progressResult['success']) {
         setState(() {
           _riderProgress = progressResult['data'];
         });
       }
 
-      // Load upcoming sessions
-      final sessionsResult = await DigitalLiteracyService.getUpcomingSessions(user.phoneNumber ?? '');
-      if (sessionsResult['success']) {
-        setState(() {
-          _upcomingSessions = List<Map<String, dynamic>>.from(sessionsResult['data']['sessions'] ?? []);
-        });
-      }
+      // Keep upcoming sessions empty for now since simplified system doesn't use scheduled sessions
+      setState(() {
+        _upcomingSessions = [];
+      });
     } catch (e) {
-      print('Error loading digital literacy data: $e');
+      print('Error loading training data: $e');
     }
   }
 
@@ -589,10 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TrainingModulesScreen(
-                            modules: _trainingModules,
-                            riderProgress: _riderProgress,
-                          ),
+                          builder: (context) => const SimpleTrainingModulesScreen(),
                         ),
                       );
                     },
@@ -664,9 +660,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildProgressCard() {
     final progress = _riderProgress!;
-    final totalPoints = progress['total_points'] ?? 0;
-    final totalModules = progress['total_modules'] ?? 4;
-    final completedModules = progress['completed_modules'] ?? 0;
+    final overallStats = progress['overall_stats'] ?? {};
+    final totalPoints = overallStats['total_points_earned'] ?? 0;
+    final totalModules = overallStats['modules_available'] ?? 0;
+    final completedModules = overallStats['modules_completed'] ?? 0;
     final progressPercentage = totalModules > 0 ? (completedModules / totalModules * 100).round() : 0;
     
     return Column(
@@ -732,6 +729,35 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             color: Colors.white70,
             fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SimpleTrainingProgressScreen(),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.2),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'View Detailed Progress',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ],
@@ -837,11 +863,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TrainingModulesScreen(
-              modules: _trainingModules,
-              riderProgress: _riderProgress,
-              selectedModuleId: module['id'],
-            ),
+            builder: (context) => const SimpleTrainingModulesScreen(),
           ),
         );
       },

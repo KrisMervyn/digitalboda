@@ -1,7 +1,9 @@
 import 'package:digitalboda_app/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/auth_service.dart';
 import 'otp_verification_screen.dart';
+import 'pin_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -17,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -160,21 +163,35 @@ class _LoginScreenState extends State<LoginScreen>
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_phoneController.text.isNotEmpty) {
-                          String fullPhoneNumber = '+256${_phoneController.text.trim()}';
-                          
-                          // Remove any spaces or dashes
-                          fullPhoneNumber = fullPhoneNumber.replaceAll(RegExp(r'[\s-]'), '');
-                          
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => OTPVerificationScreen(
-                                phoneNumber: fullPhoneNumber,
-                                isRegistration: false,
+                      onPressed: _isLoading ? null : () async {
+                        if (_phoneController.text.isNotEmpty && !_isLoading) {
+                          setState(() {
+                            _isLoading = true;
+                          });
+
+                          try {
+                            String fullPhoneNumber = '+256${_phoneController.text.trim()}';
+                            
+                            // Remove any spaces or dashes
+                            fullPhoneNumber = fullPhoneNumber.replaceAll(RegExp(r'[\s-]'), '');
+                            
+                            // Directly use OTP verification (PIN authentication disabled)
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => OTPVerificationScreen(
+                                  phoneNumber: fullPhoneNumber,
+                                  isRegistration: false,
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          } finally {
+                            // Reset loading state after navigation
+                            if (mounted) {
+                              setState(() {
+                                _isLoading = false;
+                              });
+                            }
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -185,14 +202,23 @@ class _LoginScreenState extends State<LoginScreen>
                         elevation: 8,
                         shadowColor: Color(0xFF4CA1AF).withOpacity(0.4),
                       ),
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 32),

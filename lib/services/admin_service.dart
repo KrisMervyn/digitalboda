@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/environment.dart';
 
 class AdminService {
-  static const String baseUrl = 'https://dashboard.digitalboda.com/api';
+  static String get baseUrl => EnvironmentConfig.apiBaseUrl;
   
   // Store admin token for authentication
   static String? _authToken;

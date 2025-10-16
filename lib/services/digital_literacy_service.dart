@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
+import '../config/environment.dart';
 
 class DigitalLiteracyService {
-  static const String baseUrl = 'https://dashboard.digitalboda.com/api';
+  static String get baseUrl => EnvironmentConfig.apiBaseUrl;
   
   // Get all digital literacy training modules (REAL API)
   static Future<Map<String, dynamic>> getTrainingModules() async {

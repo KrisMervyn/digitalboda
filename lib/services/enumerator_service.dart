@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/environment.dart';
 
 class EnumeratorService {
-  static const String baseUrl = 'https://dashboard.digitalboda.com/api';
+  static String get baseUrl => EnvironmentConfig.apiBaseUrl;
   
   // Store enumerator credentials for authentication
   static String? _enumeratorUsername;

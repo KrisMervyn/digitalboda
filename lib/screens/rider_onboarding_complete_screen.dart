@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import '../services/api_service.dart';
+import '../widgets/age_bracket_selector.dart';
 import 'pending_approval_screen.dart';
 
 class RiderOnboardingCompleteScreen extends StatefulWidget {
@@ -28,9 +29,12 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
   int _currentPage = 0;
   
   // Form controllers
-  final _nationalIdController = TextEditingController();
-  final _ageController = TextEditingController();
+  final _ageController = TextEditingController(); // Keep for backward compatibility
+  String? _selectedAgeBracket;
   final _locationController = TextEditingController();
+  String? _selectedAssociation;
+  List<Map<String, dynamic>> _associations = [];
+  bool _loadingAssociations = false;
   
   // Image files
   File? _profilePhoto;
@@ -42,9 +46,50 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
   final ImagePicker _picker = ImagePicker();
 
   @override
+  void initState() {
+    super.initState();
+    _loadAssociations();
+  }
+
+  Future<void> _loadAssociations() async {
+    setState(() {
+      _loadingAssociations = true;
+    });
+
+    try {
+      final result = await ApiService.getAssociations();
+      if (result['success']) {
+        setState(() {
+          _associations = List<Map<String, dynamic>>.from(result['data']);
+          _loadingAssociations = false;
+        });
+      } else {
+        // Fallback to hardcoded list if API fails
+        setState(() {
+          _associations = [
+            {'name': 'Kampala Boda Boda Association', 'location': 'Kampala'},
+            {'name': 'Entebbe Riders Association', 'location': 'Entebbe'},
+            {'name': 'Wakiso Boda Boda Union', 'location': 'Wakiso'},
+          ];
+          _loadingAssociations = false;
+        });
+      }
+    } catch (e) {
+      // Fallback to hardcoded list if there's an error
+      setState(() {
+        _associations = [
+          {'name': 'Kampala Boda Boda Association', 'location': 'Kampala'},
+          {'name': 'Entebbe Riders Association', 'location': 'Entebbe'},
+          {'name': 'Wakiso Boda Boda Union', 'location': 'Wakiso'},
+        ];
+        _loadingAssociations = false;
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
-    _nationalIdController.dispose();
     _ageController.dispose();
     _locationController.dispose();
     super.dispose();
@@ -137,18 +182,18 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
       return;
     }
 
-    if (_nationalIdPhoto == null || _nationalIdController.text.isEmpty) {
+    if (_nationalIdPhoto == null) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'National ID photo and number are required';
+        _errorMessage = 'National ID photo is required';
       });
       return;
     }
 
-    if (_ageController.text.isEmpty || _locationController.text.isEmpty) {
+    if ((_selectedAgeBracket == null && _ageController.text.isEmpty) || _selectedAssociation == null) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Age and location are required';
+        _errorMessage = 'Age bracket and association are required';
       });
       return;
     }
@@ -177,9 +222,9 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
       Map<String, dynamic> result = await ApiService.submitOnboarding(
         phoneNumber: widget.phoneNumber,
         firebaseToken: firebaseToken,
-        age: int.parse(_ageController.text),
-        location: _locationController.text.trim(),
-        nationalIdNumber: _nationalIdController.text.trim(),
+        age: _ageController.text.isNotEmpty ? int.parse(_ageController.text) : null,
+        ageBracket: _selectedAgeBracket,
+        association: _selectedAssociation!,
         profilePhotoPath: _profilePhoto?.path,
         nationalIdPhotoPath: _nationalIdPhoto?.path,
       );
@@ -472,35 +517,6 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
           ),
           SizedBox(height: 40),
           
-          // National ID Number Field
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: TextFormField(
-                controller: _nationalIdController,
-                decoration: InputDecoration(
-                  labelText: 'National ID Number',
-                  hintText: 'Enter your national ID number',
-                  border: InputBorder.none,
-                  prefixIcon: Icon(Icons.badge, color: Color(0xFF4CA1AF), size: 20),
-                  contentPadding: EdgeInsets.symmetric(vertical: 8),
-                ),
-                style: TextStyle(fontSize: 16, color: Color(0xFF2D3436)),
-              ),
-            ),
-          ),
-          SizedBox(height: 20),
           
           // National ID Photo Upload
           GestureDetector(
@@ -578,7 +594,7 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
           ),
           SizedBox(height: 12),
           Text(
-            'Help us know you better with some basic information',
+            'Select your age bracket and association',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -587,38 +603,18 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
           ),
           SizedBox(height: 40),
           
-          // Age Field
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: TextFormField(
-                controller: _ageController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Age',
-                  hintText: 'Enter your age',
-                  border: InputBorder.none,
-                  prefixIcon: Icon(Icons.calendar_today, color: Color(0xFF4CA1AF), size: 20),
-                  contentPadding: EdgeInsets.symmetric(vertical: 8),
-                ),
-                style: TextStyle(fontSize: 16, color: Color(0xFF2D3436)),
-              ),
-            ),
+          // Age Bracket Selector
+          AgeBracketSelector(
+            selectedBracket: _selectedAgeBracket,
+            onBracketSelected: (bracket) {
+              setState(() {
+                _selectedAgeBracket = bracket;
+              });
+            },
           ),
           SizedBox(height: 20),
           
-          // Location Field
+          // Association Dropdown
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -633,16 +629,29 @@ class _RiderOnboardingCompleteScreenState extends State<RiderOnboardingCompleteS
             ),
             child: Padding(
               padding: EdgeInsets.all(12),
-              child: TextFormField(
-                controller: _locationController,
+              child: DropdownButtonFormField<String>(
+                value: _selectedAssociation,
                 decoration: InputDecoration(
-                  labelText: 'Location',
-                  hintText: 'Enter your location/area',
+                  labelText: 'Boda Boda Association',
+                  hintText: 'Select your association',
                   border: InputBorder.none,
-                  prefixIcon: Icon(Icons.location_on, color: Color(0xFF4CA1AF), size: 20),
+                  prefixIcon: Icon(Icons.group, color: Color(0xFF4CA1AF), size: 20),
                   contentPadding: EdgeInsets.symmetric(vertical: 8),
                 ),
                 style: TextStyle(fontSize: 16, color: Color(0xFF2D3436)),
+                items: _loadingAssociations 
+                  ? [DropdownMenuItem<String>(value: null, child: Text('Loading...'))]
+                  : _associations.map((association) {
+                      return DropdownMenuItem<String>(
+                        value: association['name'],
+                        child: Text('${association['name']} (${association['location']})'),
+                      );
+                    }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedAssociation = newValue;
+                  });
+                },
               ),
             ),
           ),

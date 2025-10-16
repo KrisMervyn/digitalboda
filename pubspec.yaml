@@ -43,6 +43,7 @@ dependencies:
   image_picker: ^1.0.4
   crypto: ^3.0.3
   dart_jsonwebtoken: ^2.14.0
+  shared_preferences: ^2.2.2
   
 
 dev_dependencies:
